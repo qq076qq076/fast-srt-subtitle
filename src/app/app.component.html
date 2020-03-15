@@ -22,24 +22,34 @@
            [(ngModel)]="video" />
   </div>
 </div>
-<p class="container">K: 下一行開始 | L: 這一行提前結束 | I: 前捲一行 | O: 後捲一行 | U: 倒帶 3 秒 | P: 前進 3 秒 | Q: 製作 SRT 檔</p>
+<p class="container note">K: 下一行開始 | L: 這一行提前結束 | I: 前捲一行 | O: 後捲一行 | U: 倒帶 3 秒 | P: 前進 3 秒 | Q: 製作 SRT 檔</p>
+<p class="container note">K: Next Line | L: This Line Ends Early | I: Scroll Back | O: Scroll Forward | U: Rewind | P:
+  Forward | Q: Make SRT File</p>
 <div class="container">
   <div class="videoPreview">
     <youtube-player *ngIf="videoType === 'youtube'"
                     #youtube
                     [width]="640"
                     [height]="320"
-                    [videoId]="videoId"
-                    (stateChange)="stateChange($event)"></youtube-player>
+                    [videoId]="videoId"></youtube-player>
     <video [src]="mp4Src"
            #mp4Player
            (click)="toggleMP4Pplayer($event)"
            class="videoPreview"
            *ngIf="videoType === 'upload'"></video>
   </div>
-  <textarea [(ngModel)]="subtitle"
-            (input)="saveText()"
-            class="subtitle"
-            cols="30"
-            rows="10"></textarea>
+  <div class="subTitle-area">
+    <input type="file"
+           (change)="uploadText($event)" />
+    <textarea [ngModel]="srtText"
+              disabled
+              class="subtitle"
+              cols="30"
+              rows="10"></textarea>
+    <textarea [(ngModel)]="subtitle"
+              (input)="saveText()"
+              class="subtitle"
+              cols="30"
+              rows="10"></textarea>
+  </div>
 </div>

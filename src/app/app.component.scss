@@ -24,5 +24,18 @@
       flex: 1;
       max-height: 100%;
     }
+
+
+    .subTitle-area {
+      flex: 1;
+      margin-left: 10px;
+      display: flex;
+      flex-direction: column;
+    }
+  }
+
+  .note {
+    margin-top: 20px;
+    margin-bottom: 20px;
   }
 }
