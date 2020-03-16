@@ -1,13 +1,8 @@
-import { Component, OnInit, ViewChild, HostListener, ElementRef } from '@angular/core';
-import { StorageService } from './service/storage/storage.service';
-import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
-import { YouTubePlayer } from '@angular/youtube-player';
-
-interface Srt {
-  startTime: string;
-  endTime: string;
-  content: string;
-}
+import {Component, OnInit, ViewChild, HostListener, ElementRef} from '@angular/core';
+import {StorageService} from './service/storage/storage.service';
+import {DomSanitizer, SafeUrl} from '@angular/platform-browser';
+import {YouTubePlayer} from '@angular/youtube-player';
+import {Srt} from './models/Srt';
 
 @Component({
   selector: 'app-root',
@@ -17,6 +12,7 @@ interface Srt {
 export class AppComponent implements OnInit {
   @ViewChild('youtube') youtube: YouTubePlayer;
   @ViewChild('mp4Player') mp4PlayerRef: ElementRef;
+
   get mp4Player(): HTMLVideoElement {
     return this.mp4PlayerRef.nativeElement;
   }
@@ -28,36 +24,42 @@ export class AppComponent implements OnInit {
   video;
   mp4Src: SafeUrl;
   videoId: string;
+
   private storageKey = 'subTitle';
+
+  private beginningTimestamp = 0;
+  private lineCursor = -1;
 
   get srtText(): string {
     return this.srtList.map((srt, index) => {
       return index + '\n'
-        + srt.startTime + ' --> ' + srt.endTime + '\n'
+        + srt.startTimeText + ' --> ' + srt.endTimeText + '\n'
         + srt.content + '\n\n';
     }).join('');
   }
+
   constructor(
     private storageService: StorageService,
     private sanitizer: DomSanitizer,
-  ) { }
+  ) {
+  }
 
   @HostListener('window:keyup', ['$event']) keyEvent(event: KeyboardEvent) {
     console.log(event);
-    if (event.code === 'keyK') {
-      // 下一行開始
-    } else if (event.code === 'keyL') {
-      // 這一行提前結束
-    } else if (event.code === 'keyI') {
-      // 前捲一行
-    } else if (event.code === 'keyO') {
-      // 後捲一行
-    } else if (event.code === 'keyU') {
-      // 倒帶 3 秒
-    } else if (event.code === 'keyP') {
-      // 前進 3 秒
-    } else if (event.code === 'keyQ') {
-      // 製作 SRT 檔
+    if (event.code === 'KeyK') {
+      this.handleStartLine();
+    } else if (event.code === 'KeyL') {
+      this.handleEndLine();
+    } else if (event.code === 'KeyI') {
+      // TODO: 前捲一行
+    } else if (event.code === 'KeyO') {
+      // TODO: 後捲一行
+    } else if (event.code === 'KeyU') {
+      // TODO: 倒帶 3 秒
+    } else if (event.code === 'KeyP') {
+      // TODO: 前進 3 秒
+    } else if (event.code === 'KeyQ') {
+      // TODO: 製作 SRT 檔
     }
   }
 
@@ -75,7 +77,8 @@ export class AppComponent implements OnInit {
       reader.readAsText(fileList[0], 'UTF-8');
       reader.onload = (evt) => {
         this.subtitle = evt.target.result.toString();
-        this.setSrtText();
+        this.setupSrtList();
+        this.startToMakeSrt();
       };
       reader.onerror = (evt) => {
         console.error('error reading file');
@@ -106,7 +109,7 @@ export class AppComponent implements OnInit {
     this.mp4Src = this.sanitizer.bypassSecurityTrustUrl(blob);
   }
 
-  toggleMP4Pplayer(event) {
+  toggleMP4Player(event) {
     if (this.mp4Player.paused) {
       this.mp4Player.play();
     } else {
@@ -114,13 +117,33 @@ export class AppComponent implements OnInit {
     }
   }
 
-  private setSrtText() {
-    this.srtList = this.subtitle.split(/[\n]/).map(content => ({
-      startTime: '',
-      endTime: '',
-      content: content.trim(),
-    }));
-    console.log(this.subtitle);
-    console.log(this.srtText);
+  private startToMakeSrt() {
+    this.lineCursor = -1;
+    this.beginningTimestamp = Date.now();
+  }
+
+  private setupSrtList() {
+    this.srtList = this.subtitle.split(/[\n]/).map(content => new Srt(content.trim()));
+  }
+
+  private generateTimestamp(): number {
+    return Date.now() - this.beginningTimestamp;
+  }
+
+  private handleStartLine() {
+    if (this.lineCursor >= 0 && this.srtList[this.lineCursor].endTime ==  null) {
+      this.srtList[this.lineCursor].endTime = this.generateTimestamp();
+    }
+
+    this.lineCursor++;
+    if (this.srtList.length <= this.lineCursor) {
+      return;
+    }
+
+    this.srtList[this.lineCursor].startTime = this.generateTimestamp();
+  }
+
+  private handleEndLine() {
+    this.srtList[this.lineCursor].endTime = this.generateTimestamp();
   }
 }

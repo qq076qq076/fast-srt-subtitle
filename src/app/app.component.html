@@ -34,7 +34,7 @@
                     [videoId]="videoId"></youtube-player>
     <video [src]="mp4Src"
            #mp4Player
-           (click)="toggleMP4Pplayer($event)"
+           (click)="toggleMP4Player($event)"
            class="videoPreview"
            *ngIf="videoType === 'upload'"></video>
   </div>
