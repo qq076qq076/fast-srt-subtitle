@@ -2,22 +2,22 @@
 <div class="container">
   <div class="row">
     <input type="radio"
-           value="youtube"
+           [value]="SourceTypeEnum.Youtube"
            [(ngModel)]="videoType" />
     youtube連結
     <input type="url"
-           *ngIf="videoType === 'youtube'"
+           *ngIf="videoType === SourceTypeEnum.Youtube"
            [(ngModel)]="youtubeUrl"
            (change)="loadFromYoutube()" />
   </div>
   <div class="row">
     <input type="radio"
-           value="upload"
+           [value]="SourceTypeEnum.Upload"
            [(ngModel)]="videoType" />
     上傳mp4
     <input type="file"
            accept="video"
-           *ngIf="videoType === 'upload'"
+           *ngIf="videoType === SourceTypeEnum.Upload"
            (change)="loadFromMp4File($event)"
            [(ngModel)]="video" />
   </div>
@@ -27,16 +27,17 @@
   Forward | Q: Make SRT File</p>
 <div class="container">
   <div class="videoPreview">
-    <youtube-player *ngIf="videoType === 'youtube'"
+    <youtube-player *ngIf="videoType === SourceTypeEnum.Youtube"
                     #youtube
                     [width]="640"
                     [height]="320"
-                    [videoId]="videoId"></youtube-player>
+                    [videoId]="videoId"
+                    (apiChange)="setListener($event)"></youtube-player>
     <video [src]="mp4Src"
            #mp4Player
            (click)="clickMp4Player($event)"
            class="videoPreview"
-           *ngIf="videoType === 'upload'"></video>
+           *ngIf="videoType === SourceTypeEnum.Upload"></video>
   </div>
   <div class="subTitle-area">
     <input type="file"

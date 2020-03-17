@@ -1,8 +1,9 @@
-import {Component, OnInit, ViewChild, HostListener, ElementRef} from '@angular/core';
-import {StorageService} from './service/storage/storage.service';
-import {DomSanitizer, SafeUrl} from '@angular/platform-browser';
-import {YouTubePlayer} from '@angular/youtube-player';
-import {Srt} from './models/Srt';
+import { Component, OnInit, ViewChild, HostListener, ElementRef } from '@angular/core';
+import { StorageService } from './service/storage/storage.service';
+import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
+import { YouTubePlayer } from '@angular/youtube-player';
+import { Srt } from './models/Srt';
+import { SourceType } from './models/Source';
 
 @Component({
   selector: 'app-root',
@@ -12,8 +13,8 @@ import {Srt} from './models/Srt';
 export class AppComponent implements OnInit {
   private KeyCodeStartLine = 'KeyK';
   private KeyCodeEndLine = 'KeyL';
-  private KeyCodeSeekForward = 'KeyU';
-  private KeyCodeSeekBackward = 'KeyP';
+  private KeyCodeSeekForward = 'KeyP';
+  private KeyCodeSeekBackward = 'KeyU';
   private KeyCodeGoNextSrt = 'KeyO';
   private KeyCodeGoLastSrt = 'KeyI';
   private KeyCodeDownloadSrt = 'KeyQ';
@@ -24,16 +25,16 @@ export class AppComponent implements OnInit {
   @ViewChild('youtube') youtube: YouTubePlayer;
   @ViewChild('mp4Player') mp4PlayerRef: ElementRef;
 
-  videoType = 'youtube';
   subtitle = '';
   srtList: Srt[] = [];
   youtubeUrl: string;
   video;
   mp4Src: SafeUrl;
   videoId: string;
+  readonly SourceTypeEnum = SourceType;
+  videoType: SourceType = this.SourceTypeEnum.Youtube;
 
   private storageKey = 'subTitle';
-
   private lineCursor = -1;
 
   get mp4Player(): HTMLVideoElement {
@@ -55,22 +56,11 @@ export class AppComponent implements OnInit {
   }
 
   @HostListener('window:keyup', ['$event']) keyEvent(event: KeyboardEvent) {
-    console.log(event);
-    if (event.code === this.KeyCodeStartLine) {
-      this.handleStartLine();
-    } else if (event.code === this.KeyCodeEndLine) {
-      this.handleEndLine();
-    } else if (event.code === this.KeyCodeGoLastSrt) {
-      this.handleGoLastSrt();
-    } else if (event.code === this.KeyCodeGoNextSrt) {
-      this.handleGoNextSrt();
-    } else if (event.code === this.KeyCodeSeekForward) {
-      this.handleSeekForward();
-    } else if (event.code === this.KeyCodeSeekBackward) {
-      this.handleSeekBackward();
-    } else if (event.code === this.KeyCodeDownloadSrt) {
-      this.handleDownloadSrt();
-    }
+    this.keyupListener(event);
+  }
+
+  setListener(event: YT.PlayerEvent) {
+    // event.target.addEventListener('keyup', this.keyupListener.bind(this));
   }
 
   ngOnInit(): void {
@@ -121,12 +111,40 @@ export class AppComponent implements OnInit {
     }
   }
 
+  keyupListener(event: KeyboardEvent) {
+    if (event.code === this.KeyCodeStartLine) {
+      this.handleStartLine();
+    } else if (event.code === this.KeyCodeEndLine) {
+      this.handleEndLine();
+    } else if (event.code === this.KeyCodeGoLastSrt) {
+      this.handleGoLastSrt();
+    } else if (event.code === this.KeyCodeGoNextSrt) {
+      this.handleGoNextSrt();
+    } else if (event.code === this.KeyCodeSeekForward) {
+      this.handleSeekForward();
+    } else if (event.code === this.KeyCodeSeekBackward) {
+      this.handleSeekBackward();
+    } else if (event.code === this.KeyCodeDownloadSrt) {
+      this.handleDownloadSrt();
+    }
+  }
+
   private getTrackCurrentTime(): number {
-    return this.mp4Player.currentTime;
+    if (this.videoType === this.SourceTypeEnum.Upload) {
+      return this.mp4Player.currentTime;
+    } else if (this.videoType === this.SourceTypeEnum.Youtube) {
+      return this.youtube.getCurrentTime();
+    }
   }
 
   private seekTrack(seconds) {
-    this.mp4Player.currentTime += seconds;
+    console.log(seconds)
+    console.log(this.videoType === this.SourceTypeEnum.Youtube)
+    if (this.videoType === this.SourceTypeEnum.Upload) {
+      this.mp4Player.currentTime += seconds;
+    } else if (this.videoType === this.SourceTypeEnum.Youtube) {
+      return this.youtube.seekTo(this.youtube.getCurrentTime() + seconds, false);
+    }
   }
 
   private startToMakeSrt() {
@@ -139,7 +157,7 @@ export class AppComponent implements OnInit {
 
   private handleStartLine() {
     console.log(this.mp4Player.currentTime);
-    if (this.lineCursor >= 0 && this.srtList[this.lineCursor].endTime ==  null) {
+    if (this.lineCursor >= 0 && this.srtList[this.lineCursor].endTime == null) {
       this.srtList[this.lineCursor].endTime = this.getTrackCurrentTime();
     }
 
