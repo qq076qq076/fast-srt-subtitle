@@ -4,6 +4,7 @@ import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
 import { YouTubePlayer } from '@angular/youtube-player';
 import { Srt } from './models/Srt';
 import { SourceType } from './models/Source';
+import * as FileSaver from 'file-saver';
 
 @Component({
   selector: 'app-root',
@@ -211,6 +212,7 @@ export class AppComponent implements OnInit {
   }
 
   private handleDownloadSrt() {
-
+    const file = new File(['Hello, world!', 'xxxxxx', '33333'], 'xxx.srt', {type: 'text/plain;charset=utf-8'});
+    FileSaver.saveAs(file);
   }
 }
