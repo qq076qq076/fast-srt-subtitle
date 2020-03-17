@@ -17,15 +17,11 @@ export class Srt {
     return !!this.endTime ? this.generateTimeString(this.endTime) : '';
   }
 
-  private generateTimeString(timestamp: number): string {
-    const seconds = Math.floor(timestamp / 1000);
-    const milliseconds = timestamp - seconds * 1000;
-    const minutes = Math.floor(seconds / 60);
-    const hours = Math.floor(minutes / 60);
-
-    const sec = seconds % 60;
-    const min = minutes % 60;
-
-    return hours + ':' + min + ':' + sec + '.' + milliseconds;
+  private generateTimeString(seconds: number): string {
+    const hours = Math.floor(seconds / 60 / 60);
+    const minutes = Math.floor(seconds / 60 % 60);
+    const sec = Math.floor(seconds % 60);
+    const milli = Math.floor(((seconds % 60) - sec) * 1000);
+    return ('00' + hours).slice(-2) + ':' + ('00' + minutes).slice(-2) + ':' + ('00' + sec).slice(-2) + ',' + milli;
   }
 }
