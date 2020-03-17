@@ -8,7 +8,7 @@
     <input type="url"
            *ngIf="videoType === 'youtube'"
            [(ngModel)]="youtubeUrl"
-           (change)="setVideoId()" />
+           (change)="loadFromYoutube()" />
   </div>
   <div class="row">
     <input type="radio"
@@ -18,7 +18,7 @@
     <input type="file"
            accept="video"
            *ngIf="videoType === 'upload'"
-           (change)="previewMP4($event)"
+           (change)="loadFromMp4File($event)"
            [(ngModel)]="video" />
   </div>
 </div>
@@ -34,7 +34,7 @@
                     [videoId]="videoId"></youtube-player>
     <video [src]="mp4Src"
            #mp4Player
-           (click)="toggleMP4Player($event)"
+           (click)="clickMp4Player($event)"
            class="videoPreview"
            *ngIf="videoType === 'upload'"></video>
   </div>
