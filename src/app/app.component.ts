@@ -1,10 +1,11 @@
-import { Component, OnInit, ViewChild, HostListener, ElementRef } from '@angular/core';
-import { StorageService } from './service/storage/storage.service';
-import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
-import { YouTubePlayer } from '@angular/youtube-player';
-import { Srt } from './models/Srt';
-import { SourceType } from './models/Source';
+import {Component, ElementRef, HostListener, OnInit, ViewChild} from '@angular/core';
+import {StorageService} from './service/storage/storage.service';
+import {DomSanitizer, SafeUrl} from '@angular/platform-browser';
+import {YouTubePlayer} from '@angular/youtube-player';
+import {Srt} from './models/Srt';
+import {SourceType} from './models/SourceType';
 import * as FileSaver from 'file-saver';
+import {YoutubeSrtGenerator} from './generators/YoutubeSrtGenerator';
 
 @Component({
   selector: 'app-root',
@@ -21,21 +22,23 @@ export class AppComponent implements OnInit {
   private KeyCodeDownloadSrt = 'KeyQ';
 
   private SecondsToSeek = 3;
-  private SrtToGo = 1;
+  private Filename = 'result';
 
   @ViewChild('youtube') youtube: YouTubePlayer;
   @ViewChild('mp4Player') mp4PlayerRef: ElementRef;
 
   subtitle = '';
   srtList: Srt[] = [];
-  youtubeUrl: string;
-  video;
-  mp4Src: SafeUrl;
-  videoId: string;
-  readonly SourceTypeEnum = SourceType;
-  videoType: SourceType = this.SourceTypeEnum.Youtube;
 
-  private storageKey = 'subTitle';
+  readonly SourceTypeEnum = SourceType;
+  sourceType: SourceType = this.SourceTypeEnum.Youtube;
+
+  youtubeUrl: string;
+  youtubeVideoId: string;
+
+  mp4File;
+  mp4FileSafeUrl: SafeUrl;
+
   private lineCursor = -1;
 
   get mp4Player(): HTMLVideoElement {
@@ -45,7 +48,7 @@ export class AppComponent implements OnInit {
   get srtText(): string {
     return this.srtList.map((srt, index) => {
       return index + '\n'
-        + srt.startTimeText + ' --> ' + srt.endTimeText + '\n'
+        + srt.startTime + ' --> ' + srt.endTime + '\n'
         + srt.content + '\n\n';
     }).join('');
   }
@@ -68,7 +71,7 @@ export class AppComponent implements OnInit {
     const tag = document.createElement('script');
     tag.src = 'https://www.youtube.com/iframe_api';
     document.body.appendChild(tag);
-    this.videoId = 'Ath3BX9DBRs';
+    this.youtubeVideoId = 'Ath3BX9DBRs';
   }
 
   uploadText(event: Event) {
@@ -88,20 +91,16 @@ export class AppComponent implements OnInit {
   }
 
   loadFromYoutube() {
-    this.videoId = this.youtubeUrl.split('v=')[1];
-    const ampersandPosition = this.videoId.indexOf('&');
+    this.youtubeVideoId = this.youtubeUrl.split('v=')[1];
+    const ampersandPosition = this.youtubeVideoId.indexOf('&');
     if (ampersandPosition !== -1) {
-      this.videoId = this.videoId.substring(0, ampersandPosition);
+      this.youtubeVideoId = this.youtubeVideoId.substring(0, ampersandPosition);
     }
   }
 
   loadFromMp4File(event: Event) {
     const blob = URL.createObjectURL((event.target as HTMLInputElement).files[0]);
-    this.mp4Src = this.sanitizer.bypassSecurityTrustUrl(blob);
-  }
-
-  saveText() {
-    this.storageService.set(this.storageKey, this.subtitle);
+    this.mp4FileSafeUrl = this.sanitizer.bypassSecurityTrustUrl(blob);
   }
 
   clickMp4Player(event) {
@@ -131,19 +130,17 @@ export class AppComponent implements OnInit {
   }
 
   private getTrackCurrentTime(): number {
-    if (this.videoType === this.SourceTypeEnum.Upload) {
+    if (this.sourceType === this.SourceTypeEnum.LocalFile) {
       return this.mp4Player.currentTime;
-    } else if (this.videoType === this.SourceTypeEnum.Youtube) {
+    } else if (this.sourceType === this.SourceTypeEnum.Youtube) {
       return this.youtube.getCurrentTime();
     }
   }
 
   private seekTrack(seconds) {
-    console.log(seconds)
-    console.log(this.videoType === this.SourceTypeEnum.Youtube)
-    if (this.videoType === this.SourceTypeEnum.Upload) {
+    if (this.sourceType === this.SourceTypeEnum.LocalFile) {
       this.mp4Player.currentTime += seconds;
-    } else if (this.videoType === this.SourceTypeEnum.Youtube) {
+    } else if (this.sourceType === this.SourceTypeEnum.Youtube) {
       return this.youtube.seekTo(this.youtube.getCurrentTime() + seconds, false);
     }
   }
@@ -153,12 +150,13 @@ export class AppComponent implements OnInit {
   }
 
   private setupSrtList() {
-    this.srtList = this.subtitle.split(/[\n]/).map(content => new Srt(content.trim()));
+    this.srtList = this.subtitle.split(/[\n]/).map(content => ({
+      content: content.trim(),
+    }));
   }
 
   private handleStartLine() {
-    console.log(this.mp4Player.currentTime);
-    if (this.lineCursor >= 0 && this.srtList[this.lineCursor].endTime == null) {
+    if (this.lineCursor >= 0 && this.srtList[this.lineCursor].endTime === undefined) {
       this.srtList[this.lineCursor].endTime = this.getTrackCurrentTime();
     }
 
@@ -186,10 +184,10 @@ export class AppComponent implements OnInit {
     for (; i > -1; i--) {
       const srt = this.srtList[i];
       if (srt.endTime === undefined || srt.endTime > currentTime) {
-        srt.endTime = null;
+        srt.endTime = undefined;
 
         if (srt.startTime === undefined || srt.startTime > currentTime) {
-          srt.startTime = null;
+          srt.startTime = undefined;
           continue;
         }
       }
@@ -212,7 +210,10 @@ export class AppComponent implements OnInit {
   }
 
   private handleDownloadSrt() {
-    const file = new File(['Hello, world!', 'xxxxxx', '33333'], 'xxx.srt', {type: 'text/plain;charset=utf-8'});
+    const srtGenerator = new YoutubeSrtGenerator(this.srtList);
+    const srt = srtGenerator.generate();
+    const filename = this.Filename + '.' + srtGenerator.fileExtension;
+    const file = new File([srt], filename, {type: 'text/plain;charset=utf-8'});
     FileSaver.saveAs(file);
   }
 }
