@@ -48,7 +48,7 @@ export class AppComponent implements OnInit {
   get srtText(): string {
     return this.srtList.map((srt, index) => {
       return index + '\n'
-        + srt.startTime + ' --> ' + srt.endTime + '\n'
+        + srt.startTime.time + ' --> ' + srt.endTime.time + '\n'
         + srt.content + '\n\n';
     }).join('');
   }
@@ -150,14 +150,15 @@ export class AppComponent implements OnInit {
   }
 
   private setupSrtList() {
-    this.srtList = this.subtitle.split(/[\n]/).map(content => ({
-      content: content.trim(),
-    }));
+    this.srtList = this.subtitle.split(/[\n]/)
+      .map(content => content.trim())
+      .filter(content => content.length > 0)
+      .map(content => new Srt(content));
   }
 
   private handleStartLine() {
-    if (this.lineCursor >= 0 && this.srtList[this.lineCursor].endTime === undefined) {
-      this.srtList[this.lineCursor].endTime = this.getTrackCurrentTime();
+    if (this.lineCursor >= 0 && this.srtList[this.lineCursor].endTime.time === undefined) {
+      this.srtList[this.lineCursor].endTime.time = this.getTrackCurrentTime();
     }
 
     this.lineCursor++;
@@ -165,11 +166,11 @@ export class AppComponent implements OnInit {
       return;
     }
 
-    this.srtList[this.lineCursor].startTime = this.getTrackCurrentTime();
+    this.srtList[this.lineCursor].startTime.time = this.getTrackCurrentTime();
   }
 
   private handleEndLine() {
-    this.srtList[this.lineCursor].endTime = this.getTrackCurrentTime();
+    this.srtList[this.lineCursor].endTime.time = this.getTrackCurrentTime();
   }
 
   private handleSeekForward() {
@@ -183,10 +184,10 @@ export class AppComponent implements OnInit {
     let i = this.lineCursor;
     for (; i > -1; i--) {
       const srt = this.srtList[i];
-      if (srt.endTime === undefined || srt.endTime > currentTime) {
+      if (srt.endTime.time === undefined || srt.endTime.time > currentTime) {
         srt.endTime = undefined;
 
-        if (srt.startTime === undefined || srt.startTime > currentTime) {
+        if (srt.startTime.time === undefined || srt.startTime.time > currentTime) {
           srt.startTime = undefined;
           continue;
         }

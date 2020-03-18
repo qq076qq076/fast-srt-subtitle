@@ -1,4 +1,5 @@
 import {Srt} from '../models/Srt';
+import {Time} from '../models/Time';
 
 export class YoutubeSrtGenerator {
   private srtList: Srt[];
@@ -23,15 +24,14 @@ export class YoutubeSrtGenerator {
     return lineList.join('\n');
   }
 
-  private convert(seconds?: number): string {
-    if (seconds === undefined) {
+  private convert(time: Time): string {
+    if (time.time === undefined) {
       return 'undefined';
     }
 
-    const hours = Math.floor(seconds / 60 / 60);
-    const minutes = Math.floor(seconds / 60 % 60);
-    const sec = Math.floor(seconds % 60);
-    const milli = Math.floor(((seconds % 60) - sec) * 1000);
-    return ('00' + hours).slice(-2) + ':' + ('00' + minutes).slice(-2) + ':' + ('00' + sec).slice(-2) + ',' + milli;
+    return ('00' + time.hours).slice(-2)
+      + ':' + ('00' + time.minutes).slice(-2)
+      + ':' + ('00' + time.seconds).slice(-2)
+      + ',' + time.milliseconds;
   }
 }
