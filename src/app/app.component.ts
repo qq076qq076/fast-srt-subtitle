@@ -1,11 +1,11 @@
-import {Component, ElementRef, HostListener, OnInit, ViewChild} from '@angular/core';
-import {StorageService} from './service/storage/storage.service';
-import {DomSanitizer, SafeUrl} from '@angular/platform-browser';
-import {YouTubePlayer} from '@angular/youtube-player';
-import {Srt} from './models/Srt';
-import {SourceType} from './models/SourceType';
+import { Component, ElementRef, HostListener, OnInit, ViewChild } from '@angular/core';
+import { StorageService } from './service/storage/storage.service';
+import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
+import { YouTubePlayer } from '@angular/youtube-player';
+import { Srt } from './models/Srt';
+import { SourceType } from './models/SourceType';
 import * as FileSaver from 'file-saver';
-import {YoutubeSrtGenerator} from './generators/YoutubeSrtGenerator';
+import { YoutubeSrtGenerator } from './generators/YoutubeSrtGenerator';
 
 @Component({
   selector: 'app-root',
@@ -129,6 +129,14 @@ export class AppComponent implements OnInit {
     }
   }
 
+  add() {
+    this.srtList.push(new Srt(''));
+  }
+
+  deleteRow(index: number) {
+    this.srtList.splice(index, 1);
+  }
+
   private getTrackCurrentTime(): number {
     if (this.sourceType === this.SourceTypeEnum.LocalFile) {
       return this.mp4Player.currentTime;
@@ -214,7 +222,7 @@ export class AppComponent implements OnInit {
     const srtGenerator = new YoutubeSrtGenerator(this.srtList);
     const srt = srtGenerator.generate();
     const filename = this.Filename + '.' + srtGenerator.fileExtension;
-    const file = new File([srt], filename, {type: 'text/plain;charset=utf-8'});
+    const file = new File([srt], filename, { type: 'text/plain;charset=utf-8' });
     FileSaver.saveAs(file);
   }
 }

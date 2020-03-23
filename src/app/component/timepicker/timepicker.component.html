@@ -1,0 +1,11 @@
+<ngb-timepicker [(ngModel)]="time"
+                (change)="changeTime()"
+                [seconds]="true"
+                [spinners]="false"></ngb-timepicker>
+<div class="ngb-tp-spacer">:</div>
+<div class="ngb-tp-input-container">
+  <input type="number"
+         class="ngb-tp-input form-control"
+         [(ngModel)]="millisecond"
+         (change)="changeTime()" />
+</div>

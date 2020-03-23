@@ -3,23 +3,23 @@
   <div class="row">
     <input type="radio"
            [value]="SourceTypeEnum.Youtube"
-           [(ngModel)]="sourceType"/>
+           [(ngModel)]="sourceType" />
     youtube連結
     <input type="url"
            *ngIf="sourceType === SourceTypeEnum.Youtube"
            [(ngModel)]="youtubeUrl"
-           (change)="loadFromYoutube()"/>
+           (change)="loadFromYoutube()" />
   </div>
   <div class="row">
     <input type="radio"
            [value]="SourceTypeEnum.LocalFile"
-           [(ngModel)]="sourceType"/>
+           [(ngModel)]="sourceType" />
     上傳mp4
     <input type="file"
            accept="video"
            *ngIf="sourceType === SourceTypeEnum.LocalFile"
            (change)="loadFromMp4File($event)"
-           [(ngModel)]="mp4File"/>
+           [(ngModel)]="mp4File" />
   </div>
 </div>
 <p class="container note">K: 下一行開始 | L: 這一行提前結束 | I: 前捲一行 | O: 後捲一行 | U: 倒帶 3 秒 | P: 前進 3 秒 | Q: 製作 SRT 檔</p>
@@ -41,7 +41,7 @@
   </div>
   <div class="subTitle-area">
     <input type="file"
-           (change)="uploadText($event)"/>
+           (change)="uploadText($event)" />
     <textarea [ngModel]="srtText"
               disabled
               class="subtitle"
@@ -49,30 +49,32 @@
               rows="10"></textarea>
   </div>
 </div>
-<div>
-  <table>
-    <tr *ngFor="let srt of srtList">
-      <td>
-        <input type="text" [(ngModel)]="srt.startTime.hours"/>
-        :
-        <input type="text" [(ngModel)]="srt.startTime.minutes"/>
-        :
-        <input type="text" [(ngModel)]="srt.startTime.seconds"/>
-        ,
-        <input type="text" [(ngModel)]="srt.startTime.milliseconds"/>
-      </td>
-      <td>
-        <input type="text" [(ngModel)]="srt.endTime.hours"/>
-        :
-        <input type="text" [(ngModel)]="srt.endTime.minutes"/>
-        :
-        <input type="text" [(ngModel)]="srt.endTime.seconds"/>
-        ,
-        <input type="text" [(ngModel)]="srt.endTime.milliseconds"/>
-      </td>
-      <td>
-        <input type="text" [(ngModel)]="srt.content"/>
-      </td>
-    </tr>
+<div class="container">
+  <table class="table">
+    <thead>
+      <th width="400">開始時間/結束時間</th>
+      <th>文字</th>
+      <th>
+        <button class="btn  btn-primary"
+                (click)="add()">新增</button>
+      </th>
+    </thead>
+    <tbody>
+      <tr *ngFor="let srt of srtList;let i = index;">
+        <td width="400">
+          <app-timepicker [(ngModel)]="srt.startTime.time"></app-timepicker>
+          <app-timepicker [(ngModel)]="srt.endTime.time"></app-timepicker>
+        </td>
+        <td>
+          <input type="text"
+                 class="form-control"
+                 [(ngModel)]="srt.content" />
+        </td>
+        <td>
+          <button class="btn btn-primary"
+                  (click)="deleteRow(i)">刪除</button>
+        </td>
+      </tr>
+    </tbody>
   </table>
 </div>
